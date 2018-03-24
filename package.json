@@ -1,0 +1,9 @@
+{
+  "name": "svelte-vue",
+  "version": "1.0.0",
+  "description": "Trying to run svelte in vue render function",
+  "main": "index.js",
+  "repository": "git@github.com:Askoth/svelte-vue.git",
+  "author": "Marcelo Oliveira <askoth@gmail.com>",
+  "license": "MIT"
+}
