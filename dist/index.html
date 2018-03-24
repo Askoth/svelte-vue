@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>teste</title>
+</head>
+<body>
+
+    <div class="app">
+    </div>
+
+    <script type="text/template" id="app-template">
+        <ul>
+            {{#each tests as test}}
+                <li>
+                    {{test.name}}
+                </li>
+            {{/each}}
+        </ul>
+    </script>
+
+    <script src="js/vue.js"></script>
+    <script src="js/svelte.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>

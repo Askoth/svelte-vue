@@ -1,2 +1,4 @@
 # svelte-vue
-Trying to run svelte in vue render function
+This should **NOT** be used in productions
+
+This is me playing with vuejs render functions and using svelte template syntax which I prefer

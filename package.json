@@ -5,5 +5,8 @@
   "main": "index.js",
   "repository": "git@github.com:Askoth/svelte-vue.git",
   "author": "Marcelo Oliveira <askoth@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^0.57.1"
+  }
 }
