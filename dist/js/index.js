@@ -13,9 +13,18 @@ var vueSvelteMixin = {
 
 
             // vue needs a wrapper element, so we will pick only the first one
-            result = html.children.map((child) => {
-                return this.createNodesFromSvelteObject(h, child, this)
-            });
+            result = html.children.reduce((prev, child) => {
+                let nodes = this.createNodesFromSvelteObject(h, child, this);
+
+                if (nodes instanceof Array) {
+                    prev.push(...nodes);
+                } else {
+                    prev.push(nodes);
+                }
+
+                return prev
+
+            }, []);
 
             // types:
             // RawMustacheTag
@@ -55,7 +64,11 @@ var vueSvelteMixin = {
 
                 switch(type) {
                     case ('RawMustacheTag'):
-                        return this._v(this.resolveSvelteExpression(child.expression, store));
+                        return h('span', {
+                            domProps: {
+                                innerHTML: this.resolveSvelteExpression(child.expression, store)
+                            }
+                        });
                     break;
                     case ('MustacheTag'):
                         return this._v(this.resolveSvelteExpression(child.expression, store));
@@ -64,7 +77,10 @@ var vueSvelteMixin = {
                         return this._v(child.data)
                     break;
                     case ('Element'):
-                        return h(child.name, child.children.map((child) => {
+
+                        let vNodeConfig = this.configVNode(child);
+
+                        return h(child.name, vNodeConfig, child.children.map((child) => {
                             return s(child, Object.assign({}, store));
                         }))
                     break;
@@ -80,27 +96,111 @@ var vueSvelteMixin = {
                             }));
                             return prev;
                         }, [])
-                        // return h(child.name, child.children.map(createNodeFromSvelte.bind(this)))
+                    break;
+                    case ('IfBlock'):
+                        let flag = this.resolveSvelteExpression(child.expression, store);
+                        if (flag) {
+                            return child.children.map((child) => {
+                                return s(child, Object.assign({}, store));
+                            })
+                        } else {
+                            return this._v('')
+                        }
                     break;
                 }
             }
         },
         resolveSvelteExpression (expression, store) {
-            let { name, type } = expression;
+            let { name, type } = expression,
+                eval2 = eval,
+                object,
+                property,
+                left,
+                operator,
+                right;
 
             switch (type) {
                 case ('Identifier'):
                     return store[name]
                 break;
+                case ('Literal'):
+                    return expression.value
+                break;
                 case ('MemberExpression'):
-                    const object = this.resolveSvelteExpression(expression.object, store);
-                    const property = this.resolveSvelteExpression(expression.property, object);
+                    object = this.resolveSvelteExpression(expression.object, store);
+                    property = this.resolveSvelteExpression(expression.property, object);
                     return property
+                break;
+                case ('BinaryExpression'):
+                    left = this.resolveSvelteExpression(expression.left, store);
+                    operator = expression.operator;
+                    right = this.resolveSvelteExpression(expression.right, store);
+
+                    // rollup has problems with direct use of eval
+                    return eval2(`${left} ${operator} ${right}`)
+                break;
+                case ('LogicalExpression'):
+
+                    left = this.resolveSvelteExpression(expression.left, store);
+                    operator = expression.operator;
+                    right = this.resolveSvelteExpression(expression.right, store);
+
+                    // rollup has problems with direct use of eval
+                    return eval2(`${left} ${operator} ${right}`)
                 break;
                 default:
                     throw new Error (`I don't know this one! ${JSON.stringify(expression)}`);
                 break;
             }
+        },
+        configVNode (child) {
+
+            let { attributes } = child,
+                result = {};
+
+            attributes.forEach((attribute) => {
+
+                const { type, name, value } = attribute;
+
+                function setProp (prop) {
+                    result[prop] = result[prop] || {};
+
+                    return result[prop]
+                }
+
+                switch (type) {
+                    case ('Attribute'):
+                        let prop, newValue;
+
+                        newValue = value instanceof Array ? value[0].data : value;
+
+                        if (name == 'class') {
+                            setProp('class');
+                            result['class'] = newValue.split(' ').reduce((prev, className) => {
+                                if (className.trim().length > 0) {
+                                    prev[className] = true;
+                                }
+
+                                return prev
+                            }, {});
+                        } else if (name == 'style') {
+                            setProp('style');
+                            result['style'] = newValue;
+                        } else {
+                            setProp('attrs')[name] = newValue;
+                        }
+                    break;
+
+                    default:
+                        throw new Error (`I don't know this attribute! ${JSON.stringify(child)}`);
+                    break;
+                }
+
+            });
+
+            console.log(child);
+
+            return result
         }
     }
 };
@@ -108,11 +208,14 @@ var vueSvelteMixin = {
 var a = `
 vamos {{{ver}}} se
 {{text}}?
-<h1>Oi</h1>
+<h1 class="test oie" style="background: magenta; display: block;" aria-hidden="true" checkbox>Oi</h1>
+{{#if flag > 10 || flag == 10}}
+<h1>Oi2</h1>
+{{/if}}
 <ul>
     {{#each tests as test}}
         <li>
-            {{test.name.deeper}}
+            {{{test.name.deeper}}}
         </li>
     {{/each}}
 </ul>
@@ -130,12 +233,13 @@ new Vue({
     template: a,
     data () {
         return {
+            flag: 10,
             ver: 'ver',
             text: 'funciona',
             tests: [
                 {
                     name: {
-                        deeper: 1
+                        deeper: '<b>1</b>'
                     }
                 },
                 {
