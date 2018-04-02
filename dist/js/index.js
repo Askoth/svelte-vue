@@ -210,7 +210,7 @@ vamos {{{ver}}} se
 {{text}}?
 <h1 class="test oie" style="background: magenta; display: block;" aria-hidden="true" checkbox>Oi</h1>
 {{#if flag > 10 || flag == 10}}
-<h1>Oi2</h1>
+<h1 on:click="something()">Oi2</h1>
 {{/if}}
 <ul>
     {{#each tests as test}}
