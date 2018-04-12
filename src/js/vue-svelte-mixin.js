@@ -148,6 +148,7 @@ export default {
                     return eval2(`${left} ${operator} ${right}`)
                 break;
                 default:
+                console.log(expression)
                     throw new Error (`I don't know this one! ${JSON.stringify(expression)}`);
                 break;
             }

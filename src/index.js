@@ -1,7 +1,7 @@
 import vueSvelteMixin from './js/vue-svelte-mixin.js'
 
 var a = `
-vamos {{{ver}}} se
+vamos {{{translate(ver, 1, {a:2}, ['1'])}}} se
 {{text}}?
 <h1 class="test oie" style="background: magenta; display: block;" aria-hidden="true" checkbox>Oi</h1>
 {{#if flag > 10 || flag == 10}}
